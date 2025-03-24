@@ -5,304 +5,304 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contraentrega CO</title>
     <style>
-        /* Estilos principales */
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; background: #f8f9fa; }
-        .container { background: white; width: 90%; max-width: 1200px; padding: 20px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); margin: 20px auto; }
-        .table-container { overflow-x: auto; margin: 20px 0; }
-        .product-table { width: 100%; border-collapse: collapse; }
-        .product-table th, .product-table td { padding: 12px; border-bottom: 1px solid #ddd; text-align: left; }
-        .product-table th { background: #2c3e50; color: white; }
-        .quantity-controls { display: flex; align-items: center; gap: 8px; }
-        .checkout-section { background: #f8f9fa; padding: 20px; margin-top: 20px; border-radius: 8px; }
-        .search-container { margin: 15px 0; }
-        #searchInput { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 25px; }
-        .delivery-form input { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ddd; border-radius: 5px; }
-        .payment-instructions { background: #e3f2fd; padding: 15px; margin: 15px 0; border-radius: 8px; }
-        .contact-buttons { display: flex; gap: 10px; margin-top: 10px; }
-        .contact-buttons a { text-decoration: none; color: white; padding: 10px 20px; border-radius: 5px; flex: 1; text-align: center; }
-        .success-message { background: #d4edda; color: #155724; padding: 10px; border-radius: 5px; margin-top: 15px; display: none; }
-        footer { text-align: center; margin-top: 30px; padding: 20px; color: #666; }
-        
-        /* Estilos Admin */
-        .admin-section { background: white; padding: 20px; margin: 20px 0; border-radius: 12px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); }
-        .inventory-table, .orders-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        .inventory-table th, .inventory-table td, .orders-table th, .orders-table td { padding: 12px; border: 1px solid #ddd; text-align: left; }
-        .inventory-table th { background: #2c3e50; color: white; }
-        .orders-table th { background: #4CAF50; color: white; }
-        .admin-input { padding: 8px; width: 100px; border: 1px solid #ddd; border-radius: 4px; }
-        .admin-button { padding: 8px 15px; background: #2c3e50; color: white; border: none; border-radius: 4px; cursor: pointer; }
-        .order-details { background: #f8f9fa; padding: 10px; margin: 10px 0; border-radius: 4px; }
-        .status-select { padding: 6px; border-radius: 4px; border: 1px solid #ddd; }
-        .search-admin { margin: 15px 0; padding: 10px; width: 300px; border: 1px solid #ddd; border-radius: 25px; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th, td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        .producto-lista tr:hover {
+            background-color: #f5f5f5;
+        }
+
+        .carrito {
+            background: #e9ecef;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .boton {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: opacity 0.3s;
+        }
+
+        .boton:hover {
+            opacity: 0.8;
+        }
+
+        .admin-panel {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+
+        .input-admin {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin: 5px;
+        }
+
+        .oculto {
+            display: none;
+        }
     </style>
-    <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
 </head>
 <body>
-    <!-- Página Principal -->
     <div class="container">
-        <header>
-            <h1>Contraentrega CO</h1>
-            <p><a href="https://www.google.com/maps?q=3.4842,-76.5445" target="_blank">
-                Punto Contraentrega: El Mirador sector los tanques, Montebello, Cali ⚡
-            </a></p>
-            <div class="contact-buttons">
-                <a href="https://wa.me/573215340988" class="whatsapp" style="background: #25D366;">WhatsApp</a>
-                <a href="tel:+573215340988" class="call" style="background: #34B7F1;">Llamar</a>
-            </div>
-        </header>
-
-        <div class="checkout-section">
-            <div id="orderSummary"></div>
-            <div class="delivery-options">
-                <label><input type="radio" name="delivery" value="pickup" checked> Recoger en punto</label>
-                <label><input type="radio" name="delivery" value="delivery"> Domicilio</label>
-            </div>
-            <form id="deliveryForm" class="delivery-form">
-                <input type="text" id="name" name="name" placeholder="Nombre completo" required>
-                <input type="tel" id="phone" name="phone" placeholder="Teléfono" required>
-                <input type="email" id="email" name="email" placeholder="Correo electrónico" required>
-                <div id="addressField" style="display: none;">
-                    <input type="text" id="address" name="address" placeholder="Dirección">
-                </div>
-                <div style="margin-top: 15px;">
-                    <button type="button" onclick="handlePaymentCOP()" style="background: #4CAF50; color: white;">Pagar con COP</button>
-                    <button type="button" onclick="handlePaymentLightning()" style="background: #FFD700;">Pagar con Lightning</button>
-                </div>
-            </form>
-            <div id="successMessage" class="success-message">¡Pedido realizado!</div>
-            <div id="paymentInstructions" class="payment-instructions" style="display: none;">
-                <p>✅ Total: <strong id="totalCOP"></strong> COP</p>
-                <p>🔗 Dirección Lightning: <strong>contraentregaco@coinos.io</strong></p>
-                <p>📝 Referencia: <strong id="orderRef"></strong></p>
-                <div id="qrCode"></div>
-            </div>
-        </div>
-
-        <div class="search-container">
-            <input type="text" id="searchInput" placeholder="Buscar productos...">
-        </div>
-
-        <div class="table-container">
-            <table class="product-table">
-                <thead>
-                    <tr>
-                        <th>Código</th>
-                        <th>Nombre</th>
-                        <th>Precio</th>
-                        <th>Cantidad</th>
-                        <th>Inventario</th>
-                    </tr>
-                </thead>
-                <tbody id="productsBody"></tbody>
-            </table>
-        </div>
-
-        <footer>
-            <a href="#" onclick="showAdminPanel()" style="color: #dc3545;">Panel Admin</a>
-            <p>Contraentrega © Todos los derechos reservados</p>
-        </footer>
-    </div>
-
-    <!-- Panel Admin (Oculto) -->
-    <div id="adminPanel" class="container" style="display: none;">
-        <button onclick="returnToMain()" class="admin-button" style="background: #dc3545; margin: 20px 0;">← Volver</button>
+        <h1>🛒 Contraentrega CO</h1>
         
-        <div class="admin-section">
-            <h2>🗃️ Gestión de Inventario</h2>
-            <input type="text" class="search-admin" id="searchInventory" placeholder="Buscar productos...">
-            <table class="inventory-table">
+        <!-- Sección Principal -->
+        <div id="main">
+            <!-- Lista de Productos -->
+            <div class="productos">
+                <h2>Productos Disponibles</h2>
+                <table class="producto-lista">
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th>Precio</th>
+                            <th>Stock</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="productos-body"></tbody>
+                </table>
+            </div>
+
+            <!-- Carrito de Compras -->
+            <div class="carrito">
+                <h2>Tu Carrito</h2>
+                <div id="carrito-items"></div>
+                <p>Total: $<span id="total-carrito">0</span></p>
+                <button class="boton" style="background: #28a745; color: white;" onclick="mostrarCheckout()">Finalizar Compra</button>
+            </div>
+
+            <!-- Formulario de Checkout -->
+            <div id="checkout-form" class="oculto">
+                <h2>Datos de Entrega</h2>
+                <input type="text" id="nombre" placeholder="Nombre completo" required>
+                <input type="tel" id="telefono" placeholder="Teléfono" required>
+                <input type="email" id="email" placeholder="Correo electrónico" required>
+                <input type="text" id="direccion" placeholder="Dirección de entrega">
+                <button class="boton" style="background: #007bff; color: white;" onclick="procesarPago()">Confirmar Pedido</button>
+            </div>
+        </div>
+
+        <!-- Panel Admin -->
+        <div id="admin-panel" class="admin-panel oculto">
+            <h2>🔒 Panel de Administración</h2>
+            <button class="boton" style="background: #dc3545; color: white;" onclick="togglePanel()">Cerrar Panel</button>
+            
+            <h3>Gestión de Productos</h3>
+            <table>
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>SKU</th>
-                        <th>Producto</th>
+                        <th>Nombre</th>
                         <th>Precio</th>
-                        <th>Inventario</th>
+                        <th>Stock</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
-                <tbody id="inventoryBody"></tbody>
+                <tbody id="admin-productos"></tbody>
             </table>
-        </div>
 
-        <div class="admin-section">
-            <h2>📦 Gestión de Pedidos</h2>
-            <input type="text" class="search-admin" id="searchOrders" placeholder="Buscar pedidos...">
-            <table class="orders-table">
+            <h3>Pedidos</h3>
+            <table>
                 <thead>
                     <tr>
                         <th>Orden ID</th>
                         <th>Cliente</th>
                         <th>Total</th>
                         <th>Estado</th>
-                        <th>Detalles</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
-                <tbody id="ordersBody"></tbody>
+                <tbody id="admin-pedidos"></tbody>
             </table>
         </div>
+
+        <footer>
+            <button class="boton" style="background: #6c757d; color: white;" onclick="toggleAdmin()">Acceso Admin</button>
+        </footer>
     </div>
 
     <script>
-        // Configuración inicial
-        let cart = {};
-        let currentOrderId = '';
-        let products = JSON.parse(localStorage.getItem('products')) || [];
-        let orders = JSON.parse(localStorage.getItem('orders')) || [];
-
-        // Inicializar productos si no existen
-        if(products.length === 0) {
-            products = [
-                { id: 1, sku: "@leticiaamazonas1", name: "Local Leticia Amazonas", price: 10000, inventory: 1000 },
-                { id: 2, sku: "@medellinantioquia2", name: "Local Medellín Antioquia", price: 10000, inventory: 1000 },
-                { id: 3, sku: "@medellinantioquia3", name: "Local Medellín Antioquia 2", price: 10000, inventory: 1000 }
-            ];
-            localStorage.setItem('products', JSON.stringify(products));
-        }
+        // Configuración
+        const API_URL = 'https://tudominio.workers.dev/api'; // Cambiar por tu URL de Cloudflare Worker
+        let carrito = {};
+        let productos = [];
+        let pedidos = [];
 
         // Funciones principales
-        function renderProducts() {
-            const tbody = document.getElementById('productsBody');
-            tbody.innerHTML = products.map(product => `
-                <tr>
-                    <td>${product.sku}</td>
-                    <td>${product.name}</td>
-                    <td>$${product.price.toLocaleString()}</td>
-                    <td>
-                        <div class="quantity-controls">
-                            <button onclick="adjustQuantity(${product.id}, -1)">-</button>
-                            <span>${cart[product.id] || 0}</span>
-                            <button onclick="adjustQuantity(${product.id}, 1)">+</button>
-                        </div>
-                    </td>
-                    <td>${product.inventory}</td>
-                </tr>
-            `).join('');
-        }
-
-        function adjustQuantity(id, delta) {
-            const product = products.find(p => p.id === id);
-            cart[id] = Math.max(0, Math.min((cart[id] || 0) + delta, product.inventory));
-            renderProducts();
-            updateSummary();
-        }
-
-        function updateSummary() {
-            const summaryDiv = document.getElementById('orderSummary');
-            let total = 0;
-            let html = '<div class="order-items">';
-            
-            Object.entries(cart).forEach(([id, qty]) => {
-                if(qty > 0) {
-                    const product = products.find(p => p.id == id);
-                    total += product.price * qty;
-                    html += `
-                        <div class="order-item">
-                            <span>${product.name}</span>
-                            <span>${qty} × $${product.price.toLocaleString()} = $${(qty * product.price).toLocaleString()}</span>
-                        </div>
-                    `;
-                }
-            });
-            
-            html += `<div class="total-summary">Total: $${total.toLocaleString()} COP</div></div>`;
-            summaryDiv.innerHTML = html;
-        }
-
-        function submitForm(isLightning) {
-            currentOrderId = 'ORD-' + Date.now();
-            const formData = new FormData(document.getElementById('deliveryForm'));
-            
-            // Guardar pedido
-            const orderData = {
-                id: currentOrderId,
-                name: formData.get('name'),
-                phone: formData.get('phone'),
-                email: formData.get('email'),
-                address: formData.get('address') || 'Recoge en punto',
-                items: cart,
-                total: calculateTotal(),
-                status: 'nuevo',
-                date: new Date().toISOString()
-            };
-            
-            orders.push(orderData);
-            localStorage.setItem('orders', JSON.stringify(orders));
-            
-            // Resto de lógica de pago...
-            document.getElementById('successMessage').style.display = 'block';
-            setTimeout(() => location.reload(), 3000);
-        }
-
-        // Funciones Admin
-        function showAdminPanel() {
-            const password = prompt('Contraseña de admin:');
-            if(password === 'Admin123') {
-                document.querySelector('.container').style.display = 'none';
-                document.getElementById('adminPanel').style.display = 'block';
-                initAdmin();
+        async function cargarDatos() {
+            try {
+                const [resProductos, resPedidos] = await Promise.all([
+                    fetch(`${API_URL}/products`),
+                    fetch(`${API_URL}/orders`)
+                ]);
+                
+                productos = await resProductos.json();
+                pedidos = await resPedidos.json();
+                renderizarProductos();
+            } catch (error) {
+                console.error('Error:', error);
             }
         }
 
-        function initAdmin() {
-            document.getElementById('inventoryBody').innerHTML = products.map(product => `
+        function renderizarProductos() {
+            const tbody = document.getElementById('productos-body');
+            tbody.innerHTML = productos.map(producto => `
                 <tr>
-                    <td>${product.id}</td>
-                    <td>${product.sku}</td>
-                    <td>${product.name}</td>
-                    <td><input class="admin-input" value="${product.price}" id="price-${product.id}"></td>
-                    <td><input class="admin-input" value="${product.inventory}" id="stock-${product.id}"></td>
-                    <td><button class="admin-button" onclick="updateProduct(${product.id})">💾 Guardar</button></td>
+                    <td>${producto.nombre}</td>
+                    <td>$${producto.precio}</td>
+                    <td>${producto.stock}</td>
+                    <td>
+                        <button onclick="agregarAlCarrito(${producto.id})" 
+                                style="background: #17a2b8; color: white;">
+                            Añadir
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function agregarAlCarrito(id) {
+            const producto = productos.find(p => p.id === id);
+            if (producto.stock > 0) {
+                carrito[id] = (carrito[id] || 0) + 1;
+                producto.stock--;
+                actualizarCarrito();
+            }
+        }
+
+        function actualizarCarrito() {
+            const carritoDiv = document.getElementById('carrito-items');
+            let total = 0;
+            
+            carritoDiv.innerHTML = Object.entries(carrito).map(([id, cantidad]) => {
+                const producto = productos.find(p => p.id === parseInt(id));
+                total += producto.precio * cantidad;
+                return `
+                    <div>
+                        ${producto.nombre} - 
+                        Cantidad: ${cantidad} - 
+                        $${producto.precio * cantidad}
+                    </div>
+                `;
+            }).join('');
+            
+            document.getElementById('total-carrito').textContent = total;
+        }
+
+        // Funciones de Checkout
+        async function procesarPago() {
+            const pedido = {
+                items: carrito,
+                total: document.getElementById('total-carrito').textContent,
+                cliente: {
+                    nombre: document.getElementById('nombre').value,
+                    telefono: document.getElementById('telefono').value,
+                    email: document.getElementById('email').value,
+                    direccion: document.getElementById('direccion').value
+                },
+                fecha: new Date().toISOString(),
+                estado: 'pendiente'
+            };
+
+            try {
+                await fetch(`${API_URL}/orders`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify([...pedidos, pedido])
+                });
+                
+                alert('Pedido realizado con éxito!');
+                location.reload();
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        // Funciones Admin
+        async function toggleAdmin() {
+            const password = prompt('Contraseña de administrador:');
+            if (password === 'Admin123') {
+                document.getElementById('admin-panel').classList.remove('oculto');
+                cargarDatosAdmin();
+            }
+        }
+
+        async function cargarDatosAdmin() {
+            const tbodyProductos = document.getElementById('admin-productos');
+            tbodyProductos.innerHTML = productos.map(producto => `
+                <tr>
+                    <td>${producto.id}</td>
+                    <td><input class="input-admin" value="${producto.nombre}"></td>
+                    <td><input class="input-admin" type="number" value="${producto.precio}"></td>
+                    <td><input class="input-admin" type="number" value="${producto.stock}"></td>
+                    <td>
+                        <button class="boton" style="background: #28a745; color: white;" 
+                                onclick="actualizarProducto(${producto.id}, this)">
+                            Guardar
+                        </button>
+                    </td>
                 </tr>
             `).join('');
 
-            document.getElementById('ordersBody').innerHTML = orders.map(order => `
+            const tbodyPedidos = document.getElementById('admin-pedidos');
+            tbodyPedidos.innerHTML = pedidos.map(pedido => `
                 <tr>
-                    <td>${order.id}</td>
-                    <td>${order.name}<br>${order.phone}</td>
-                    <td>$${order.total.toLocaleString()}</td>
+                    <td>${pedido.id}</td>
+                    <td>${pedido.cliente.nombre}</td>
+                    <td>$${pedido.total}</td>
                     <td>
-                        <select class="status-select" onchange="updateStatus('${order.id}', this.value)">
-                            <option ${order.status === 'nuevo' ? 'selected' : ''}>nuevo</option>
-                            <option ${order.status === 'preparacion' ? 'selected' : ''}>preparacion</option>
-                            <option ${order.status === 'enviado' ? 'selected' : ''}>enviado</option>
-                            <option ${order.status === 'completado' ? 'selected' : ''}>completado</option>
+                        <select onchange="actualizarEstado('${pedido.id}', this.value)">
+                            <option ${pedido.estado === 'pendiente' ? 'selected' : ''}>pendiente</option>
+                            <option ${pedido.estado === 'completado' ? 'selected' : ''}>completado</option>
                         </select>
                     </td>
-                    <td class="order-details">
-                        ${Object.entries(order.items).map(([id, qty]) => `
-                            ${products.find(p => p.id == id).name} (${qty})<br>
-                        `).join('')}
+                    <td>
+                        <button class="boton" style="background: #dc3545; color: white;" 
+                                onclick="eliminarPedido('${pedido.id}')">
+                            Eliminar
+                        </button>
                     </td>
-                    <td><button class="admin-button" onclick="deleteOrder('${order.id}')">🗑️ Eliminar</button></td>
                 </tr>
             `).join('');
         }
 
-        function updateProduct(id) {
-            const product = products.find(p => p.id === id);
-            product.price = parseInt(document.getElementById(`price-${id}`).value);
-            product.inventory = parseInt(document.getElementById(`stock-${id}`).value);
-            localStorage.setItem('products', JSON.stringify(products));
-            alert('Actualizado!');
-        }
-
-        function deleteOrder(orderId) {
-            orders = orders.filter(o => o.id !== orderId);
-            localStorage.setItem('orders', JSON.stringify(orders));
-            initAdmin();
-        }
-
-        function returnToMain() {
-            location.reload();
-        }
-
-        // Inicializar
-        renderProducts();
-        document.querySelector('input[name="delivery"]').addEventListener('change', (e) => {
-            document.getElementById('addressField').style.display = e.target.value === 'delivery' ? 'block' : 'none';
-        });
+        // Inicialización
+        cargarDatos();
     </script>
 </body>
 </html>
