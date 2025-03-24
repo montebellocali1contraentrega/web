@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contraentrega CO</title>
     <style>
-        /* Estilos principales */
         body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; background: #f8f9fa; }
         .container { background: white; width: 90%; max-width: 1200px; padding: 20px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); margin: 20px auto; }
         .table-container { overflow-x: auto; margin: 20px 0; }
@@ -22,8 +21,6 @@
         .contact-buttons a { text-decoration: none; color: white; padding: 10px 20px; border-radius: 5px; flex: 1; text-align: center; }
         .success-message { background: #d4edda; color: #155724; padding: 10px; border-radius: 5px; margin-top: 15px; display: none; }
         footer { text-align: center; margin-top: 30px; padding: 20px; color: #666; }
-        
-        /* Estilos Admin */
         .admin-section { background: white; padding: 20px; margin: 20px 0; border-radius: 12px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); }
         .inventory-table, .orders-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         .inventory-table th, .inventory-table td, .orders-table th, .orders-table td { padding: 12px; border: 1px solid #ddd; text-align: left; }
@@ -38,7 +35,6 @@
     <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
 </head>
 <body>
-    <!-- Página Principal -->
     <div class="container">
         <header>
             <h1>Contraentrega CO</h1>
@@ -46,8 +42,8 @@
                 Punto Contraentrega: El Mirador sector los tanques, Montebello, Cali ⚡
             </a></p>
             <div class="contact-buttons">
-                <a href="https://wa.me/573215340988" class="whatsapp" style="background: #25D366;">WhatsApp</a>
-                <a href="tel:+573215340988" class="call" style="background: #34B7F1;">Llamar</a>
+                <a href="https://wa.me/573215340988" style="background: #25D366;">WhatsApp</a>
+                <a href="tel:+573215340988" style="background: #34B7F1;">Llamar</a>
             </div>
         </header>
 
@@ -103,9 +99,8 @@
         </footer>
     </div>
 
-    <!-- Panel Admin (Oculto) -->
     <div id="adminPanel" class="container" style="display: none;">
-        <button onclick="returnToMain()" class="admin-button" style="background: #dc3545; margin: 20px 0;">← Volver</button>
+        <button onclick="returnToMain()" style="background: #dc3545; margin: 20px 0;">← Volver</button>
         
         <div class="admin-section">
             <h2>🗃️ Gestión de Inventario</h2>
@@ -145,26 +140,54 @@
     </div>
 
     <script>
-        // Configuración inicial
+        // Configuración (REEMPLAZA ESTOS VALORES)
+        const API_URL = 'https://script.google.com/macros/s/TU_SCRIPT_ID/exec'; // Reemplaza con tu URL
+        const SHEET_ID = 'TU_SHEET_ID'; // Reemplaza con tu ID de Google Sheet
+
         let cart = {};
         let currentOrderId = '';
-        let products = JSON.parse(localStorage.getItem('products')) || [];
+        let products = [];
         let orders = JSON.parse(localStorage.getItem('orders')) || [];
 
-        // Inicializar productos si no existen
-        if(products.length === 0) {
-            products = [
-                { id: 1, sku: "@leticiaamazonas1", name: "Local Leticia Amazonas", price: 10000, inventory: 1000 },
-                { id: 2, sku: "@medellinantioquia2", name: "Local Medellín Antioquia", price: 10000, inventory: 1000 },
-                { id: 3, sku: "@medellinantioquia3", name: "Local Medellín Antioquia 2", price: 10000, inventory: 1000 }
-            ];
-            localStorage.setItem('products', JSON.stringify(products));
+        // Funciones para Google Sheets
+        async function fetchProducts() {
+            try {
+                const response = await fetch(API_URL);
+                products = await response.json();
+            } catch (error) {
+                console.error('Error cargando productos:', error);
+                // Datos de ejemplo si falla la conexión
+                products = [
+                    {id:1,sku:"@leticiaamazonas1",name:"Local Leticia Amazonas",price:10000,inventory:1000},
+                    {id:2,sku:"@medellinantioquia2",name:"Local Medellín Antioquia",price:10000,inventory:1000}
+                ];
+            }
+        }
+
+        async function updateSheetProduct(id, price, inventory) {
+            try {
+                await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({id, price, inventory, sheetId: SHEET_ID})
+                });
+                return true;
+            } catch (error) {
+                console.error('Error actualizando producto:', error);
+                return false;
+            }
         }
 
         // Funciones principales
-        function renderProducts() {
-            const tbody = document.getElementById('productsBody');
-            tbody.innerHTML = products.map(product => `
+        async function renderProducts() {
+            await fetchProducts();
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const filteredProducts = products.filter(p => 
+                p.name.toLowerCase().includes(searchTerm) || 
+                p.sku.toLowerCase().includes(searchTerm)
+            );
+
+            document.getElementById('productsBody').innerHTML = filteredProducts.map(product => `
                 <tr>
                     <td>${product.sku}</td>
                     <td>${product.name}</td>
@@ -183,69 +206,108 @@
 
         function adjustQuantity(id, delta) {
             const product = products.find(p => p.id === id);
+            if(!product) return;
+            
             cart[id] = Math.max(0, Math.min((cart[id] || 0) + delta, product.inventory));
             renderProducts();
             updateSummary();
         }
 
         function updateSummary() {
-            const summaryDiv = document.getElementById('orderSummary');
             let total = 0;
-            let html = '<div class="order-items">';
+            let html = '<h3>Resumen del Pedido</h3><div class="order-items">';
             
             Object.entries(cart).forEach(([id, qty]) => {
                 if(qty > 0) {
                     const product = products.find(p => p.id == id);
-                    total += product.price * qty;
-                    html += `
-                        <div class="order-item">
-                            <span>${product.name}</span>
-                            <span>${qty} × $${product.price.toLocaleString()} = $${(qty * product.price).toLocaleString()}</span>
-                        </div>
-                    `;
+                    if(product) {
+                        const subtotal = product.price * qty;
+                        total += subtotal;
+                        html += `<div>${product.name} - ${qty} × $${product.price.toLocaleString()} = $${subtotal.toLocaleString()}</div>`;
+                    }
                 }
             });
             
-            html += `<div class="total-summary">Total: $${total.toLocaleString()} COP</div></div>`;
-            summaryDiv.innerHTML = html;
+            html += `</div><div class="total-summary"><strong>Total: $${total.toLocaleString()} COP</strong></div>`;
+            document.getElementById('orderSummary').innerHTML = html;
+        }
+
+        function handlePaymentCOP() {
+            submitForm(false);
+        }
+
+        function handlePaymentLightning() {
+            submitForm(true);
         }
 
         function submitForm(isLightning) {
-            currentOrderId = 'ORD-' + Date.now();
-            const formData = new FormData(document.getElementById('deliveryForm'));
-            
-            // Guardar pedido
-            const orderData = {
+            const form = document.getElementById('deliveryForm');
+            if(!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            currentOrderId = 'ORD-' + Date.now().toString().slice(-6);
+            const formData = new FormData(form);
+            const total = calculateTotal();
+
+            const order = {
                 id: currentOrderId,
                 name: formData.get('name'),
                 phone: formData.get('phone'),
                 email: formData.get('email'),
-                address: formData.get('address') || 'Recoge en punto',
-                items: cart,
-                total: calculateTotal(),
+                address: document.querySelector('input[name="delivery"]:checked').value === 'delivery' ? 
+                         formData.get('address') : 'Recoger en punto',
+                items: {...cart},
+                total: total,
                 status: 'nuevo',
-                date: new Date().toISOString()
+                date: new Date().toISOString(),
+                paymentMethod: isLightning ? 'Lightning' : 'COP'
             };
-            
-            orders.push(orderData);
+
+            orders.push(order);
             localStorage.setItem('orders', JSON.stringify(orders));
-            
-            // Resto de lógica de pago...
-            document.getElementById('successMessage').style.display = 'block';
-            setTimeout(() => location.reload(), 3000);
+
+            if(isLightning) {
+                document.getElementById('totalCOP').textContent = total.toLocaleString();
+                document.getElementById('orderRef').textContent = currentOrderId;
+                document.getElementById('paymentInstructions').style.display = 'block';
+                new QRCode(document.getElementById("qrCode"), {
+                    text: `lightning:contraentregaco@coinos.io?amount=${total/1000}&message=${currentOrderId}`,
+                    width: 150,
+                    height: 150
+                });
+            } else {
+                document.getElementById('successMessage').style.display = 'block';
+            }
+
+            // Limpiar carrito
+            cart = {};
+            renderProducts();
+            updateSummary();
+        }
+
+        function calculateTotal() {
+            return Object.entries(cart).reduce((total, [id, qty]) => {
+                const product = products.find(p => p.id == id);
+                return total + (product ? product.price * qty : 0);
+            }, 0);
         }
 
         // Funciones Admin
-        function showAdminPanel() {
+        async function showAdminPanel() {
             const password = prompt('Contraseña de admin:');
             if(password === 'Admin123') {
                 document.querySelector('.container').style.display = 'none';
                 document.getElementById('adminPanel').style.display = 'block';
-                initAdmin();
+                await initAdmin();
             }
         }
 
-        function initAdmin() {
+        async function initAdmin() {
+            await fetchProducts();
+            
+            // Inventario
             document.getElementById('inventoryBody').innerHTML = products.map(product => `
                 <tr>
                     <td>${product.id}</td>
@@ -257,6 +319,7 @@
                 </tr>
             `).join('');
 
+            // Pedidos
             document.getElementById('ordersBody').innerHTML = orders.map(order => `
                 <tr>
                     <td>${order.id}</td>
@@ -271,37 +334,65 @@
                         </select>
                     </td>
                     <td class="order-details">
-                        ${Object.entries(order.items).map(([id, qty]) => `
-                            ${products.find(p => p.id == id).name} (${qty})<br>
-                        `).join('')}
+                        ${Object.entries(order.items).map(([id, qty]) => {
+                            const product = products.find(p => p.id == id);
+                            return product ? `${product.name} (${qty})<br>` : `Producto eliminado (${qty})<br>`;
+                        }).join('')}
+                        <strong>${order.paymentMethod === 'Lightning' ? '⚡ Lightning' : '💵 COP'}</strong>
                     </td>
                     <td><button class="admin-button" onclick="deleteOrder('${order.id}')">🗑️ Eliminar</button></td>
                 </tr>
             `).join('');
         }
 
-        function updateProduct(id) {
-            const product = products.find(p => p.id === id);
-            product.price = parseInt(document.getElementById(`price-${id}`).value);
-            product.inventory = parseInt(document.getElementById(`stock-${id}`).value);
-            localStorage.setItem('products', JSON.stringify(products));
-            alert('Actualizado!');
+        async function updateProduct(id) {
+            const newPrice = parseInt(document.getElementById(`price-${id}`).value);
+            const newStock = parseInt(document.getElementById(`stock-${id}`).value);
+            
+            if(isNaN(newPrice) || isNaN(newStock)) {
+                alert('Por favor ingresa valores numéricos válidos');
+                return;
+            }
+
+            const success = await updateSheetProduct(id, newPrice, newStock);
+            if(success) {
+                alert('¡Inventario actualizado en Google Sheets!');
+                await initAdmin(); // Refrescar datos
+            } else {
+                alert('Error al actualizar. Revisa la consola para más detalles.');
+            }
+        }
+
+        function updateStatus(orderId, newStatus) {
+            const order = orders.find(o => o.id === orderId);
+            if(order) {
+                order.status = newStatus;
+                localStorage.setItem('orders', JSON.stringify(orders));
+            }
         }
 
         function deleteOrder(orderId) {
-            orders = orders.filter(o => o.id !== orderId);
-            localStorage.setItem('orders', JSON.stringify(orders));
-            initAdmin();
+            if(confirm('¿Estás seguro de eliminar este pedido?')) {
+                orders = orders.filter(o => o.id !== orderId);
+                localStorage.setItem('orders', JSON.stringify(orders));
+                initAdmin();
+            }
         }
 
         function returnToMain() {
             location.reload();
         }
 
-        // Inicializar
-        renderProducts();
-        document.querySelector('input[name="delivery"]').addEventListener('change', (e) => {
-            document.getElementById('addressField').style.display = e.target.value === 'delivery' ? 'block' : 'none';
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', async () => {
+            await fetchProducts();
+            renderProducts();
+            
+            document.querySelector('input[name="delivery"]').addEventListener('change', (e) => {
+                document.getElementById('addressField').style.display = e.target.value === 'delivery' ? 'block' : 'none';
+            });
+
+            document.getElementById('searchInput').addEventListener('input', renderProducts);
         });
     </script>
 </body>
