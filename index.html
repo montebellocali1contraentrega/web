@@ -32,6 +32,13 @@
         footer a:hover { text-decoration: underline; }
         .success-message { background: #d4edda; color: #155724; padding: 10px; border-radius: 5px; margin-top: 15px; display: none; }
         .ver-imagen { cursor: pointer; color: #2c3e50; text-decoration: underline; margin-top: 10px; display: block; }
+        .order-items { margin: 15px 0; padding: 10px; background: #fff; border-radius: 8px; border: 1px solid #ddd; }
+        .order-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; }
+        .order-item:last-child { border-bottom: none; }
+        .total-summary { font-size: 1.2em; font-weight: bold; color: #2c3e50; margin-top: 10px; padding-top: 10px; border-top: 2px solid #2c3e50; }
+        .pagar-cop { background: #4CAF50; color: white; margin-right: 10px; }
+        .pagar-lightning { background: #FFD700; color: #000; }
+        .free-delivery { color: #4CAF50; font-weight: bold; margin-top: 5px; display: none; }
     </style>
     <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
 </head>
@@ -50,10 +57,11 @@
         </header>
 
         <div class="checkout-section">
-            <div id="orderSummary"></div>
+            <div id="orderSummary" class="order-summary"></div>
             <div class="delivery-options">
-                <label><input type="radio" name="delivery" value="pickup" checked> Recoger en en el punto </label>
+                <label><input type="radio" name="delivery" value="pickup" checked> Recoger en el punto</label>
                 <label><input type="radio" name="delivery" value="delivery"> Servicio a domicilio</label>
+                <div class="free-delivery" id="freeDelivery">🚚 ¡Domicilio gratis!</div>
             </div>
             <form id="deliveryForm" class="delivery-form">
                 <input type="text" id="name" name="name" placeholder="Nombre completo" required>
@@ -64,7 +72,8 @@
                 </div>
                 <input type="hidden" id="orderDetails" name="orderDetails">
                 <div style="margin-top: 15px;">
-                    <button type="button" onclick="handlePayment()" style="background: #4CAF50; color: white;">Pagar con COP</button>
+                    <button type="button" onclick="handlePaymentCOP()" class="pagar-cop">Pagar con COP</button>
+                    <button type="button" onclick="handlePaymentLightning()" class="pagar-lightning">Pagar con Lightning</button>
                 </div>
             </form>
             <div id="successMessage" class="success-message">¡Formulario enviado correctamente!</div>
@@ -158,19 +167,49 @@
         }
 
         function updateSummary() {
-            document.getElementById('orderSummary').innerHTML = `Total: $${calculateTotal().toLocaleString()} COP`;
+            const summaryDiv = document.getElementById('orderSummary');
+            let html = '<div class="order-items">';
+            
+            Object.entries(cart).forEach(([id, quantity]) => {
+                if(quantity > 0) {
+                    const product = products.find(p => p.id == id);
+                    html += `
+                        <div class="order-item">
+                            <span>${product.name}</span>
+                            <span>
+                                ${quantity} × $${product.price.toLocaleString()} 
+                                = $${(quantity * product.price).toLocaleString()}
+                            </span>
+                        </div>
+                    `;
+                }
+            });
+            
+            const total = calculateTotal();
+            html += `
+                <div class="total-summary">
+                    Total: $${total.toLocaleString()} COP
+                </div>
+            </div>`;
+            
+            summaryDiv.innerHTML = html;
         }
 
         function calculateTotal() {
             return Object.entries(cart).reduce((acc, [id, qty]) => acc + (products.find(p => p.id == id).price * qty), 0);
         }
 
-        function handlePayment() {
+        function handlePaymentCOP() {
+            if (!validateForm()) return;
+            submitForm(false);
+        }
+
+        function handlePaymentLightning() {
             if (!validateForm()) return;
             submitForm(true);
         }
 
-        function submitForm(isPayment) {
+        function submitForm(isLightningPayment) {
             currentOrderId = generateOrderId();
             const formData = new FormData(document.getElementById('deliveryForm'));
             formData.append('orderDetails', JSON.stringify(cart));
@@ -180,13 +219,11 @@
             fetch('https://formspree.io/f/meoaovqr', {
                 method: 'POST',
                 body: formData,
-                headers: {
-                    'Accept': 'application/json'
-                }
+                headers: { 'Accept': 'application/json' }
             }).then(response => {
                 if (response.ok) {
                     showSuccessMessage();
-                    if (isPayment) showPaymentInstructions();
+                    if (isLightningPayment) showPaymentInstructions();
                 } else {
                     alert('Error al enviar: ' + response.status);
                 }
@@ -254,6 +291,7 @@
             radio.addEventListener('change', (e) => {
                 const showAddress = e.target.value === 'delivery';
                 document.getElementById('addressField').style.display = showAddress ? 'block' : 'none';
+                document.getElementById('freeDelivery').style.display = showAddress ? 'block' : 'none';
                 document.getElementById('address').required = showAddress;
             });
         });
