@@ -112,6 +112,17 @@
             font-size: 0.9em;
             color: #666;
         }
+        
+        /* Botón de recarga en footer */
+        .recharge-button {
+            background: #007bff;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 5px;
+            text-decoration: none;
+            display: inline-block;
+            margin: 10px 5px;
+        }
     </style>
     <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
 </head>
@@ -198,6 +209,7 @@
             <div>
                 <a href="#" onclick="showAdminPanel()" style="color: #dc3545; margin-right: 15px;">Panel Admin</a>
                 <a href="acuerdo.html" style="color: #007bff;">Acuerdo de Términos</a>
+                <a href="recargar.html" class="recharge-button">Recargar Saldo Lightning</a>
             </div>
             <p>Contraentrega © Todos los derechos reservados</p>
             <div class="datetime" id="currentDateTimeFooter"></div>
@@ -360,7 +372,7 @@
         }
 
         function refreshLightningBalance() {
-            alert("Esta función recargaría saldo Lightning con COP (conectaría con la API de coinos.io en producción)");
+            window.location.href = "recargar.html";
         }
 
         function toggleAddressField() {
