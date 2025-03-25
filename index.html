@@ -65,8 +65,8 @@
     <div class="container">
         <header>
             <h1>Contraentrega CO</h1>
-            <p><a href="https://www.google.com/maps?q=3.4842,-76.5445" target="_blank">
-                Punto Contraentrega: El Mirador sector los tanques, Montebello, Cali ⚡
+            <p><a href="#" onclick="openImageModal('https://maps.googleapis.com/maps/api/staticmap?center=3.4842,-76.5445&zoom=15&size=600x300&maptype=roadmap&markers=color:red%7C3.4842,-76.5445')">
+                Punto Contraentrega: El Mirador sector los tanques, Montebello, Cali ⚡ (ver imagen)
             </a></p>
             <div class="contact-buttons">
                 <a href="https://wa.me/573215340988" style="background: #25D366;">WhatsApp</a>
@@ -84,28 +84,28 @@
             <div id="orderSummary"></div>
             <div class="delivery-options">
                 <label><input type="radio" name="delivery" value="pickup" checked> Recoger en punto</label>
-                <label><input type="radio" name="delivery" value="delivery"> Domicilio (+$5.000 COP) 
-                    <a href="#" onclick="openImageModal('https://ejemplo.com/mapa-domicilios.jpg')" style="font-size:0.8em;color:blue;">(ver imagen)</a>
-                </label>
+                <label><input type="radio" name="delivery" value="delivery"> Domicilio (+$5.000 COP)</label>
             </div>
             <form id="deliveryForm" class="delivery-form">
                 <input type="text" id="name" name="name" placeholder="Nombre completo" required>
                 <input type="tel" id="phone" name="phone" placeholder="Teléfono" required>
                 <input type="email" id="email" name="email" placeholder="Correo electrónico" required>
-                <div id="addressField" style="display: none;">
-                    <input type="text" id="address" name="address" placeholder="Dirección completa">
+                <div id="addressField">
+                    <input type="text" id="address" name="address" placeholder="Dirección completa" required>
                 </div>
                 <div style="margin-top: 15px;">
-                    <button type="button" onclick="handlePaymentCOP()" style="background: #4CAF50; color: white;">Pagar con COP</button>
-                    <button type="button" onclick="handlePaymentLightning()" style="background: #FFD700;">Pagar con Lightning</button>
+                    <button type="button" onclick="handlePaymentCOP()" style="background: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Pagar con COP</button>
+                    <button type="button" onclick="handlePaymentLightning()" style="background: #FFD700; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Pagar con Lightning</button>
                 </div>
             </form>
-            <div id="successMessage" class="success-message">¡Pedido realizado!</div>
+            <div id="successMessage" class="success-message">¡Pedido realizado con éxito! Nos comunicaremos contigo pronto.</div>
             <div id="paymentInstructions" class="payment-instructions" style="display: none;">
-                <p>✅ Total: <strong id="totalCOP"></strong> COP</p>
+                <h3>Instrucciones para pago Lightning</h3>
+                <p>✅ Total a pagar: <strong id="totalCOP"></strong> COP</p>
                 <p>🔗 Dirección Lightning: <strong>contraentregaco@coinos.io</strong></p>
-                <p>📝 Referencia: <strong id="orderRef"></strong></p>
-                <div id="qrCode"></div>
+                <p>📝 Referencia de pago: <strong id="orderRef"></strong></p>
+                <div id="qrCode" style="margin: 15px 0;"></div>
+                <p>Escanea el código QR o copia la dirección manualmente</p>
             </div>
         </div>
 
@@ -135,7 +135,7 @@
     </div>
 
     <div id="adminPanel" class="container" style="display: none;">
-        <button onclick="returnToMain()" style="background: #dc3545; margin: 20px 0;">← Volver</button>
+        <button onclick="returnToMain()" style="background: #dc3545; margin: 20px 0; padding: 10px 15px; border: none; border-radius: 5px; color: white; cursor: pointer;">← Volver</button>
         
         <div class="admin-section">
             <h2>🗃️ Gestión de Inventario</h2>
@@ -193,8 +193,8 @@
                 console.error('Error cargando productos:', error);
                 // Datos de ejemplo si falla la conexión
                 products = [
-                    {id:1,sku:"@leticiaamazonas1",name:"Local Leticia Amazonas",price:10000,inventory:1000,imageUrl:"https://ejemplo.com/producto1.jpg"},
-                    {id:2,sku:"@medellinantioquia2",name:"Local Medellín Antioquia",price:10000,inventory:1000,imageUrl:"https://ejemplo.com/producto2.jpg"}
+                    {id:1,sku:"PROD001",name:"Producto Ejemplo 1",price:15000,inventory:50},
+                    {id:2,sku:"PROD002",name:"Producto Ejemplo 2",price:25000,inventory:30}
                 ];
             }
         }
@@ -225,15 +225,13 @@
             document.getElementById('productsBody').innerHTML = filteredProducts.map(product => `
                 <tr>
                     <td>${product.sku}</td>
-                    <td style="cursor:pointer;color:blue;" onclick="openImageModal('${product.imageUrl}')">
-                        ${product.name}
-                    </td>
+                    <td>${product.name}</td>
                     <td>$${product.price.toLocaleString()}</td>
                     <td>
                         <div class="quantity-controls">
-                            <button onclick="adjustQuantity(${product.id}, -1)">-</button>
+                            <button onclick="adjustQuantity(${product.id}, -1)" style="padding: 5px 10px; cursor: pointer;">-</button>
                             <span>${cart[product.id] || 0}</span>
-                            <button onclick="adjustQuantity(${product.id}, 1)">+</button>
+                            <button onclick="adjustQuantity(${product.id}, 1)" style="padding: 5px 10px; cursor: pointer;">+</button>
                         </div>
                     </td>
                     <td>${product.inventory}</td>
@@ -305,8 +303,7 @@
                 name: formData.get('name'),
                 phone: formData.get('phone'),
                 email: formData.get('email'),
-                address: document.querySelector('input[name="delivery"]:checked').value === 'delivery' ? 
-                         formData.get('address') : 'Recoger en punto',
+                address: formData.get('address'),
                 items: {...cart},
                 total: total,
                 status: 'nuevo',
@@ -322,6 +319,7 @@
                 document.getElementById('totalCOP').textContent = total.toLocaleString();
                 document.getElementById('orderRef').textContent = currentOrderId;
                 document.getElementById('paymentInstructions').style.display = 'block';
+                document.getElementById('qrCode').innerHTML = '';
                 new QRCode(document.getElementById("qrCode"), {
                     text: `lightning:contraentregaco@coinos.io?amount=${total/1000}&message=${currentOrderId}`,
                     width: 150,
@@ -451,9 +449,11 @@
             await fetchProducts();
             renderProducts();
             
-            document.querySelector('input[name="delivery"]').addEventListener('change', (e) => {
-                document.getElementById('addressField').style.display = e.target.value === 'delivery' ? 'block' : 'none';
-                updateSummary();
+            // Mostrar/ocultar campo de dirección según selección
+            document.querySelectorAll('input[name="delivery"]').forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    updateSummary();
+                });
             });
 
             document.getElementById('searchInput').addEventListener('input', renderProducts);
