@@ -31,6 +31,33 @@
         .order-details { background: #f8f9fa; padding: 10px; margin: 10px 0; border-radius: 4px; }
         .status-select { padding: 6px; border-radius: 4px; border: 1px solid #ddd; }
         .search-admin { margin: 15px 0; padding: 10px; width: 300px; border: 1px solid #ddd; border-radius: 25px; }
+        
+        /* Estilos para el modal de imágenes */
+        .image-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.9);
+        }
+        .modal-content {
+            margin: 5% auto;
+            display: block;
+            width: 80%;
+            max-width: 700px;
+        }
+        .close-modal {
+            position: absolute;
+            top: 20px;
+            right: 35px;
+            color: white;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+        }
     </style>
     <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
 </head>
@@ -47,18 +74,26 @@
             </div>
         </header>
 
+        <!-- Modal para imágenes -->
+        <div class="image-modal" id="imageModal">
+            <span class="close-modal" onclick="closeImageModal()">&times;</span>
+            <img class="modal-content" id="expandedImage">
+        </div>
+
         <div class="checkout-section">
             <div id="orderSummary"></div>
             <div class="delivery-options">
                 <label><input type="radio" name="delivery" value="pickup" checked> Recoger en punto</label>
-                <label><input type="radio" name="delivery" value="delivery"> Domicilio</label>
+                <label><input type="radio" name="delivery" value="delivery"> Domicilio (+$5.000 COP) 
+                    <a href="#" onclick="openImageModal('https://ejemplo.com/mapa-domicilios.jpg')" style="font-size:0.8em;color:blue;">(ver imagen)</a>
+                </label>
             </div>
             <form id="deliveryForm" class="delivery-form">
                 <input type="text" id="name" name="name" placeholder="Nombre completo" required>
                 <input type="tel" id="phone" name="phone" placeholder="Teléfono" required>
                 <input type="email" id="email" name="email" placeholder="Correo electrónico" required>
                 <div id="addressField" style="display: none;">
-                    <input type="text" id="address" name="address" placeholder="Dirección">
+                    <input type="text" id="address" name="address" placeholder="Dirección completa">
                 </div>
                 <div style="margin-top: 15px;">
                     <button type="button" onclick="handlePaymentCOP()" style="background: #4CAF50; color: white;">Pagar con COP</button>
@@ -158,8 +193,8 @@
                 console.error('Error cargando productos:', error);
                 // Datos de ejemplo si falla la conexión
                 products = [
-                    {id:1,sku:"@leticiaamazonas1",name:"Local Leticia Amazonas",price:10000,inventory:1000},
-                    {id:2,sku:"@medellinantioquia2",name:"Local Medellín Antioquia",price:10000,inventory:1000}
+                    {id:1,sku:"@leticiaamazonas1",name:"Local Leticia Amazonas",price:10000,inventory:1000,imageUrl:"https://ejemplo.com/producto1.jpg"},
+                    {id:2,sku:"@medellinantioquia2",name:"Local Medellín Antioquia",price:10000,inventory:1000,imageUrl:"https://ejemplo.com/producto2.jpg"}
                 ];
             }
         }
@@ -190,7 +225,9 @@
             document.getElementById('productsBody').innerHTML = filteredProducts.map(product => `
                 <tr>
                     <td>${product.sku}</td>
-                    <td>${product.name}</td>
+                    <td style="cursor:pointer;color:blue;" onclick="openImageModal('${product.imageUrl}')">
+                        ${product.name}
+                    </td>
                     <td>$${product.price.toLocaleString()}</td>
                     <td>
                         <div class="quantity-controls">
@@ -215,6 +252,7 @@
 
         function updateSummary() {
             let total = 0;
+            let deliveryFee = document.querySelector('input[name="delivery"]:checked').value === 'delivery' ? 5000 : 0;
             let html = '<h3>Resumen del Pedido</h3><div class="order-items">';
             
             Object.entries(cart).forEach(([id, qty]) => {
@@ -223,12 +261,23 @@
                     if(product) {
                         const subtotal = product.price * qty;
                         total += subtotal;
-                        html += `<div>${product.name} - ${qty} × $${product.price.toLocaleString()} = $${subtotal.toLocaleString()}</div>`;
+                        html += `
+                            <div style="margin: 10px 0; padding: 5px; border-bottom: 1px solid #eee;">
+                                <b>${product.name}</b><br>
+                                Cantidad: ${qty}<br>
+                                Subtotal: $${subtotal.toLocaleString()} COP
+                            </div>`;
                     }
                 }
             });
             
-            html += `</div><div class="total-summary"><strong>Total: $${total.toLocaleString()} COP</strong></div>`;
+            if(deliveryFee > 0) {
+                html += `<div style="color: #dc3545;">Costo domicilio: $${deliveryFee.toLocaleString()} COP</div>`;
+            }
+            
+            html += `</div><div class="total-summary" style="margin-top:15px;font-size:1.2em;">
+                        <strong>Total: $${(total + deliveryFee).toLocaleString()} COP</strong>
+                     </div>`;
             document.getElementById('orderSummary').innerHTML = html;
         }
 
@@ -262,7 +311,8 @@
                 total: total,
                 status: 'nuevo',
                 date: new Date().toISOString(),
-                paymentMethod: isLightning ? 'Lightning' : 'COP'
+                paymentMethod: isLightning ? 'Lightning' : 'COP',
+                deliveryFee: document.querySelector('input[name="delivery"]:checked').value === 'delivery' ? 5000 : 0
             };
 
             orders.push(order);
@@ -288,10 +338,22 @@
         }
 
         function calculateTotal() {
-            return Object.entries(cart).reduce((total, [id, qty]) => {
+            const deliveryFee = document.querySelector('input[name="delivery"]:checked').value === 'delivery' ? 5000 : 0;
+            const subtotal = Object.entries(cart).reduce((total, [id, qty]) => {
                 const product = products.find(p => p.id == id);
                 return total + (product ? product.price * qty : 0);
             }, 0);
+            return subtotal + deliveryFee;
+        }
+
+        // Funciones para el modal de imágenes
+        function openImageModal(imgSrc) {
+            document.getElementById('expandedImage').src = imgSrc;
+            document.getElementById('imageModal').style.display = 'block';
+        }
+
+        function closeImageModal() {
+            document.getElementById('imageModal').style.display = 'none';
         }
 
         // Funciones Admin
@@ -339,6 +401,7 @@
                             return product ? `${product.name} (${qty})<br>` : `Producto eliminado (${qty})<br>`;
                         }).join('')}
                         <strong>${order.paymentMethod === 'Lightning' ? '⚡ Lightning' : '💵 COP'}</strong>
+                        ${order.deliveryFee > 0 ? `<br>Domicilio: $${order.deliveryFee.toLocaleString()} COP` : ''}
                     </td>
                     <td><button class="admin-button" onclick="deleteOrder('${order.id}')">🗑️ Eliminar</button></td>
                 </tr>
@@ -390,6 +453,7 @@
             
             document.querySelector('input[name="delivery"]').addEventListener('change', (e) => {
                 document.getElementById('addressField').style.display = e.target.value === 'delivery' ? 'block' : 'none';
+                updateSummary();
             });
 
             document.getElementById('searchInput').addEventListener('input', renderProducts);
