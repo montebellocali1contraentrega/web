@@ -58,6 +58,60 @@
             font-weight: bold;
             cursor: pointer;
         }
+        
+        /* Estilos para el modal de descripción */
+        .desc-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.9);
+        }
+        .desc-content {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 600px;
+            border-radius: 10px;
+        }
+        .close-desc {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .desc-textarea {
+            width: 100%;
+            height: 200px;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        
+        /* Estilo para enlaces clickeables */
+        .clickable {
+            color: #007bff;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+        .clickable:hover {
+            color: #0056b3;
+        }
+        
+        /* Reloj y fecha */
+        .datetime {
+            text-align: center;
+            margin: 10px 0;
+            font-size: 0.9em;
+            color: #666;
+        }
     </style>
     <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
 </head>
@@ -65,9 +119,11 @@
     <div class="container">
         <header>
             <h1>Contraentrega CO</h1>
-            <p><a href="#" onclick="openImageModal('https://maps.googleapis.com/maps/api/staticmap?center=3.4842,-76.5445&zoom=15&size=600x300&maptype=roadmap&markers=color:red%7C3.4842,-76.5445')">
-                Punto Contraentrega: El Mirador sector los tanques, Montebello, Cali ⚡ (ver imagen)
-            </a></p>
+            <p>
+                <a href="https://maps.google.com/?q=3.4842,-76.5445" target="_blank" class="clickable">Punto Contraentrega: El Mirador sector los tanques, Montebello, Cali</a> 
+                <span class="clickable" onclick="openImageModal('https://maps.googleapis.com/maps/api/staticmap?center=3.4842,-76.5445&zoom=15&size=600x300&maptype=roadmap&markers=color:red%7C3.4842,-76.5445')">⚡ (ver imagen)</span>
+            </p>
+            <div class="datetime" id="currentDateTime"></div>
             <div class="contact-buttons">
                 <a href="https://wa.me/573215340988" style="background: #25D366;">WhatsApp</a>
                 <a href="tel:+573215340988" style="background: #34B7F1;">Llamar</a>
@@ -78,6 +134,16 @@
         <div class="image-modal" id="imageModal">
             <span class="close-modal" onclick="closeImageModal()">&times;</span>
             <img class="modal-content" id="expandedImage">
+        </div>
+        
+        <!-- Modal para descripción -->
+        <div class="desc-modal" id="descModal">
+            <div class="desc-content">
+                <span class="close-desc" onclick="closeDescModal()">&times;</span>
+                <h3 id="descTitle">Descripción del Producto</h3>
+                <textarea class="desc-textarea" id="descText" placeholder="Ingresa la descripción del producto aquí..."></textarea>
+                <button onclick="saveDescription()" style="margin-top: 10px; padding: 8px 15px; background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer;">Guardar</button>
+            </div>
         </div>
 
         <div class="checkout-section">
@@ -96,6 +162,7 @@
                 <div style="margin-top: 15px;">
                     <button type="button" onclick="handlePaymentCOP()" style="background: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Pagar con COP</button>
                     <button type="button" onclick="handlePaymentLightning()" style="background: #FFD700; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Pagar con Lightning</button>
+                    <button type="button" onclick="refreshLightningBalance()" style="background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px;">Actualizar Saldo Lightning</button>
                 </div>
             </form>
             <div id="successMessage" class="success-message">¡Pedido realizado con éxito! Nos comunicaremos contigo pronto.</div>
@@ -129,8 +196,12 @@
         </div>
 
         <footer>
-            <a href="#" onclick="showAdminPanel()" style="color: #dc3545;">Panel Admin</a>
+            <div>
+                <a href="#" onclick="showAdminPanel()" style="color: #dc3545; margin-right: 15px;">Panel Admin</a>
+                <a href="acuerdo.html" style="color: #007bff;">Acuerdo de Términos</a>
+            </div>
             <p>Contraentrega © Todos los derechos reservados</p>
+            <div class="datetime" id="currentDateTimeFooter"></div>
         </footer>
     </div>
 
@@ -183,6 +254,8 @@
         let currentOrderId = '';
         let products = [];
         let orders = JSON.parse(localStorage.getItem('orders')) || [];
+        let currentEditingProduct = null;
+        let productDescriptions = JSON.parse(localStorage.getItem('productDescriptions')) || {};
 
         // Funciones para Google Sheets
         async function fetchProducts() {
@@ -224,8 +297,8 @@
 
             document.getElementById('productsBody').innerHTML = filteredProducts.map(product => `
                 <tr>
-                    <td>${product.sku}</td>
-                    <td>${product.name}</td>
+                    <td><span class="clickable" onclick="showDescriptionModal(${product.id}, '${product.sku}')">${product.sku}</span></td>
+                    <td><span class="clickable" onclick="showDescriptionModal(${product.id}, '${product.name}')">${product.name}</span></td>
                     <td>$${product.price.toLocaleString()}</td>
                     <td>
                         <div class="quantity-controls">
@@ -285,6 +358,10 @@
 
         function handlePaymentLightning() {
             submitForm(true);
+        }
+
+        function refreshLightningBalance() {
+            alert("Saldo Lightning actualizado (esta función se conectaría con la API de coinos.io en producción)");
         }
 
         function submitForm(isLightning) {
@@ -352,6 +429,46 @@
 
         function closeImageModal() {
             document.getElementById('imageModal').style.display = 'none';
+        }
+        
+        // Funciones para el modal de descripción
+        function showDescriptionModal(productId, productName) {
+            currentEditingProduct = productId;
+            document.getElementById('descTitle').textContent = `Descripción de ${productName}`;
+            document.getElementById('descText').value = productDescriptions[productId] || '';
+            document.getElementById('descModal').style.display = 'block';
+        }
+        
+        function closeDescModal() {
+            document.getElementById('descModal').style.display = 'none';
+            currentEditingProduct = null;
+        }
+        
+        function saveDescription() {
+            if(currentEditingProduct) {
+                productDescriptions[currentEditingProduct] = document.getElementById('descText').value;
+                localStorage.setItem('productDescriptions', JSON.stringify(productDescriptions));
+                closeDescModal();
+            }
+        }
+
+        // Funciones para fecha y hora
+        function updateDateTime() {
+            const now = new Date();
+            const options = { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true 
+            };
+            const dateTimeStr = now.toLocaleDateString('es-ES', options);
+            
+            document.getElementById('currentDateTime').textContent = dateTimeStr;
+            document.getElementById('currentDateTimeFooter').textContent = dateTimeStr;
         }
 
         // Funciones Admin
@@ -448,6 +565,8 @@
         document.addEventListener('DOMContentLoaded', async () => {
             await fetchProducts();
             renderProducts();
+            updateDateTime();
+            setInterval(updateDateTime, 1000);
             
             // Mostrar/ocultar campo de dirección según selección
             document.querySelectorAll('input[name="delivery"]').forEach(radio => {
@@ -457,6 +576,12 @@
             });
 
             document.getElementById('searchInput').addEventListener('input', renderProducts);
+            
+            // Cargar descripciones de productos si existen
+            const savedDescriptions = localStorage.getItem('productDescriptions');
+            if(savedDescriptions) {
+                productDescriptions = JSON.parse(savedDescriptions);
+            }
         });
     </script>
 </body>
